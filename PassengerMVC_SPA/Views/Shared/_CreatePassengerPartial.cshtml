@@ -1,0 +1,106 @@
+﻿@model PassengerMVC_SPA.ViewModels.PassengerViewModel
+<div class="modal-header">
+    <h5 class="modal-title">Add New Passenger</h5>
+</div>
+<div class="modal-body">
+    @using (Html.BeginForm("CreatePassenger", "Passengers", FormMethod.Post, new { id = "createPassengerForm", enctype = "multipart/form-data" }))
+    {
+        @Html.AntiForgeryToken()
+        @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+        <div class="row">
+            <div class="col-md-6">
+                <h4> Passenger Information</h4>
+                <div class="form-group mb-2">
+                    @Html.LabelFor(model => model.PassengerName, htmlAttributes: new { @class = "form-label" })
+                    @Html.EditorFor(model => model.PassengerName, new { htmlAttributes = new { @class = "form-control" } })
+                    @Html.ValidationMessageFor(model => model.PassengerName, "", new { @class = "text-danger" })
+                </div>
+                <div class="form-group mb-2">
+                    @Html.LabelFor(model => model.BookingDate, htmlAttributes: new { @class = "form-label" })
+                    @Html.EditorFor(model => model.BookingDate, new { htmlAttributes = new { @class = "form-control" } })
+                    @Html.ValidationMessageFor(model => model.BookingDate, "", new { @class = "text-danger" })
+                </div>
+                <div class="form-group mb-2">
+                    @Html.LabelFor(model => model.MobileNo, htmlAttributes: new { @class = "form-label" })
+                    @Html.EditorFor(model => model.MobileNo, new { htmlAttributes = new { @class = "form-control" } })
+                    @Html.ValidationMessageFor(model => model.MobileNo, "", new { @class = "text-danger" })
+                </div>
+                <div class="form-group mb-2">
+                    @Html.CheckBoxFor(model=> model.IsTransit, new {@class ="form-check-input"})
+                    @Html.LabelFor(model => model.IsTransit, htmlAttributes: new { @class = "form-label" })
+                </div>
+                <div class="form-group mb-2">
+                    @Html.LabelFor(model => model.BasicPrice, htmlAttributes: new { @class = "form-label" })
+                    @Html.EditorFor(model => model.BasicPrice, new { htmlAttributes = new { @class = "form-control" } })
+                    @Html.ValidationMessageFor(model => model.BasicPrice, "", new { @class = "text-danger" })
+                </div>
+                <div class="form-group mb-2">
+                    @Html.LabelFor(model => model.SeatTypeId, htmlAttributes: new { @class = "form-label" })
+                    @Html.DropDownListFor(model => model.SeatTypeId, new SelectList(Model.SeatTypes, "SeatTypeId", "SeatTypeName"), "Select Seat-Type", new { @class = "form-control" })
+                    @Html.ValidationMessageFor(model => model.SeatTypeId, "", new { @class = "text-danger" })
+                </div>
+                <div class="form-group mb-2">
+                    <img id="imageFile" src="~/images/noimage.png" alt="image" width="100" /><br />
+                    @Html.LabelFor(model => model.ProfileFile, htmlAttributes: new { @class = "form-label" })
+                    <input onchange="readUrl(this)" type="file" name="ProfileFile" id="ProfileFile" class="invisible" />
+                </div>
+            </div>
+            <div class="col-md-6">
+                <h4> Facility Information</h4>
+                <button onclick="AddFacility()" type="button" class="btn btn-warning mb-2">Add Facility</button>
+                @Html.Partial("_AddFacilities", Model.Facilities)
+            </div>
+        </div>
+
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <button type="submit" class="btn btn-success">Create Passenger</button>
+        </div>
+    }
+</div>
+<script src="~/Scripts/jquery-3.7.1.min.js"></script>
+<script>
+    function readUrl(i) {
+        if (i.files && i.files[0]) {
+            var reader = new FileReader();
+            reader.onload = function (e) {
+                $("#imageFile").attr('src', e.target.result)
+            }
+            reader.readAsDataURL(i.files[0]);
+        }
+    }
+    function deleteRow(btn) {
+        $(btn).closest('tr').remove();
+        updateFacilityIndex();
+    }
+    function AddFacility() {
+        var lastIndex = parseInt($('#HIndex').val());
+        var newRow = `
+            <tr>
+            <td>
+                <input type="text" value="" class="form-control" name="Facilities[${lastIndex}].FacilityName" />
+            </td>
+            <td>
+                <input type="text" value="" class="form-control" name="Facilities[${lastIndex}].Price" />
+            </td>
+            <td>
+                <button onclick="deleteRow(this)" type="button" class="btn btn-danger">Delete</button>
+            </td>
+        </tr>`;
+        $("#ExTable tbody").append(newRow);
+        $('#HIndex').val(lastIndex + 1);
+        updateFacilityIndex();
+    }
+
+    function updateFacilityIndex() {
+        $("#ExTable tbody tr").each(function (index) {
+            $(this).find("input[name^='Facilities']").each(function () {
+                var name = $(this).attr("name");
+                name = name.replace(/Facilities\[\d+\]/, "Facilities[" + index + "]");
+                $(this).attr("name", name)
+            })
+        })
+    }
+
+</script>
+

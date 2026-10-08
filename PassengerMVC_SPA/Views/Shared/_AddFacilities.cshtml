@@ -1,0 +1,28 @@
+﻿@model List<PassengerMVC_SPA.Models.Facility>
+<table id="ExTable" class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Facility Name</th>
+            <th>Price</th>
+        </tr>
+    </thead>
+    <tbody>
+        @for (int i = 0; i < Model.Count; i++)
+        {
+            <tr>
+                <td>
+                    <input type="text" value="@Model[i].FacilityName" class="form-control" name="Facilities[@i].FacilityName" />
+                </td>
+                <td>
+                    <input type="text" value="@Model[i].Price" class="form-control" name="Facilities[@i].Price" />
+                </td>
+                <td>
+                    <button onclick="deleteRow(this)" type="button" class="btn btn-danger">Delete</button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+<input type="hidden" id="HIndex" value="@Model.Count" />
+
+

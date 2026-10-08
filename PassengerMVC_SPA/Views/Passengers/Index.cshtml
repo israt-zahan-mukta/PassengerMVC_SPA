@@ -1,0 +1,146 @@
+﻿@model IEnumerable<PassengerMVC_SPA.Models.Passenger>
+@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h2>Passenger List</h2>
+<div id="passenger-app">
+    <div>
+        <button id="btnCreate" class="btn btn-success float-end mb-2">Add New Passenger</button>
+    </div>
+    <table class="table table-bordered table-striped">
+        <thead>
+            <tr>
+                <th>Image</th>
+                <th>Passenger Info</th>
+                <th>Seat Details</th>
+                <th>Facilities</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody id="passenger-list-body">
+            @foreach(var p in Model)
+            {
+                <tr data-passenger-id="@p.PassengerId">
+                    <td><img src="@Url.Content("~/images/"+p.ImageUrl)" height="100" /></td>
+                    <td>
+                        <strong>Name: </strong>@p.PassengerName <br />
+                        <strong>Booking Date: </strong>@p.BookingDate.ToString("yyyy-MM-dd") <br />
+                        <strong>Mobile No: </strong>@p.MobileNo <br />
+                    </td>
+
+                    <td>
+                        <strong>Seat Type: </strong>@p.SeatType.SeatTypeName <br />
+                        <strong>Transit Status: </strong>@(p.IsTransit ? "With Transit" : "Without Transit") <br />
+                        <strong>Basic Price: </strong>@p.BasicPrice <br />
+                    </td>
+
+                    <td>
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Facility Name</th>
+                                    <th>Price</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                @foreach (var s in p.Facilities)
+                                {
+                                    <tr>
+                                        <td>@s.FacilityName</td>
+                                        <td>@s.Price</td>
+                                    </tr>
+                                    
+                                }
+                            </tbody>
+                        </table>
+                    </td>
+                    <td>
+                        <a class="btn btn-primary btn-sm edit-btn" href="@Url.Action("EditPartial","Passengers", new {id=p.PassengerId})">Edit</a>
+                        <button class="btn btn-danger btn-sm delete-btn" data-passenger-id="@p.PassengerId" data-passenger-name="@p.PassengerName">Delete</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+<div id="modalContainer"></div>
+
+@section scripts{
+    <script>
+        $(document).ready(function () {
+            $("#btnCreate").click(function () {
+                $.get('@Url.Action("CreatePartial", "Passengers")', function (data) {
+                    $("#modalContainer").html(`<div class="modal fade show" style="display:block;" aria-modal="true" role="dialog"><div class="modal-dialog modal-lg"><div class="modal-content">` + data + `</div></div></div><div class="modal-backdrop fade show"></div>`);
+                    attachModalEventListeners();
+                });
+            });
+            $('#passenger-list-body').on('click', '.edit-btn', function (e) {
+                e.preventDefault();
+                var editUrl = $(this).attr('href');
+                $.get(editUrl, function (data) {
+                    $("#modalContainer").html('<div class="modal fade show" style="display:block;" aria-modal="true" role="dialog"><div class="modal-dialog modal-lg"><div class="modal-content">' + data + '</div></div></div><div class="modal-backdrop fade show"></div>');
+                    attachModalEventListeners("Edit", $(e.currentTarget).closest('tr').data('passenger-id'));
+                });
+            });
+            $('#passenger-list-body').on('click', '.delete-btn', function () {
+                var passengerId = $(this).data('passenger-id');
+                var passengerName = $(this).data('passenger-name');
+                if (confirm('Are you sure you want to delete ' + passengerName + '?')) {
+                    $.post('@Url.Action("DeletePassenger", "Passengers")', { id: passengerId })
+                        .done(function (response) {
+                            if (response.success) {
+                                window.location.reload();
+                            } else {
+                                alert('Error deleting passenger: ' + response.message);
+                            }
+                        })
+                        .fail(function () {
+                            alert('An error occurred while deleting the passenger.');
+                        });
+                }
+            });
+            function attachModalEventListeners(action = "Create", passengerId = null) {
+                $(document).off("click", ".modal-backdrop, .modal .btn-secondary").on("click", ".modal-backdrop, .modal .btn-secondary", function () {
+                    $("#modalContainer").empty();
+                });
+                $(document).off("submit", "#createPassengerForm, #editPassengerForm").on("submit", "#createPassengerForm, #editPassengerForm", function (e) {
+                    e.preventDefault();
+                    var form = $(this);
+                    var formData = new FormData(this);
+                    var url = '';
+                    url = '@Url.Action("CreatePassenger", "Passengers")';
+
+                    if (form.attr('id') === "createPassengerForm" && action === "Create") {
+                        url = '@Url.Action("CreatePassenger", "Passengers")';
+                    } else if (form.attr('id') === "editPassengerForm" && action === "Edit") {
+                        url = '@Url.Action("EditPassenger", "Passengers")';
+                        if (passengerId) { formData.append("PassengerId", passengerId);}
+                    }
+                    if (url) {
+                        $.ajax({
+                            url: url,
+                            type: 'POST',
+                            data: formData,
+                            contentType: false,
+                            processData: false,
+                            success: function (response) {
+                                if (response.success) {
+                                    $("#modalContainer").empty();
+                                    window.location.reload();
+                                } else {
+                                    $("#modalContainer .modal-content").html(response);
+                                    attachModalEventListeners(action, passengerId);
+                                }
+                            },
+                            error: function () {alert("Error performing operation.");}
+                        });
+                    }
+                });
+            }
+        });
+    </script>
+}
+
